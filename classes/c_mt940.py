@@ -58,13 +58,17 @@ class MT940Parser(MT940):
             return
         codewords = ['RTRN', 'BENM', 'ORDP', 'CSID', 'BUSP', 'MARF', 'EREF',
                      'PREF', 'REMI', 'ID', 'PURP', 'ULTB', 'ULTD',
-                     'CREF', 'IREF', 'CNTP', 'ULTC', 'EXCH', 'CHGS']
+                     'CREF', 'IREF', 'CNTP', 'ULTC', 'EXCH', 'CHGS', 'TRTP', 'IBAN', 'BIC', 'NAME']
         subfields = get_subfields(data, codewords)
         transaction = self.current_transaction
         # If we have no subfields, set message to whole of data passed:
         if not subfields:
-            transaction.message = data
+            transaction['name'] = data
         else:
             handle_common_subfields(transaction, subfields)
+            if not transaction.get('name') or transaction['name'] == '':
+                #transaction['name'] = subfields['TRTP'] + ' - ' + subfields['IBAN'] + ' (' + subfields['BIC'] + ') '+subfields['NAME']
+                transaction['name'] = '{} - {} {} - {}'.format(subfields['TRTP'][0], subfields['IBAN'][0], subfields['BIC'][0],
+                                                               subfields['NAME'][0])
         # Prevent handling tag 86 later for non transaction details:
         self.current_transaction = None
